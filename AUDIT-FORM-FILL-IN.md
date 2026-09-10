@@ -53,7 +53,7 @@ single submission does both — you get audited *and* the private lock lifted.)
 I am a private individual who creates and publishes original short-form videos to a
 single YouTube channel that I own and operate myself.
 
-I built a personal desktop tool, youtubebot, to help me produce those videos
+I built a personal desktop tool to help me produce those videos
 consistently. It runs only on my own computer and has no users other than me. The
 workflow is:
 
@@ -100,14 +100,35 @@ Through the official YouTube Data API documentation on developers.google.com.
 
 | Field | Put this |
 |---|---|
-| **Nome del client API** | `youtubebot` |
-| **Il nome contiene "YouTube"?** | ✅ **No, il nome non include "YouTube"** |
+| **Nome del client API** | ⚠️ Your **app name**, which **must not contain "YouTube"** — see below. |
+| **Il nome contiene "YouTube"?** | ✅ **No, il nome non include "YouTube"** — only true once you have picked a name without it. |
 | **URL di accesso principale** | `https://github.com/dreamer2664/youtubebot` |
 | **URL delle norme sulla privacy** | `https://github.com/dreamer2664/youtubebot/blob/main/PRIVACY.md` |
 | **URL dei Termini di servizio** | leave empty |
 | **Il tuo client API è accessibile pubblicamente?** | ✅ **No** |
 
-> On that last one: the honest answer is **No** — it is a tool on your own computer, not
+### ⚠️ The client name cannot contain "YouTube"
+
+The form says so explicitly:
+
+> *il nome della tua app NON può contenere il termine "YouTube" a meno che tu non abbia
+> una previa approvazione scritta da parte di YouTube.*
+
+The name `youtubebot` contains "YouTube", so it is not usable as the client name. Pick a
+neutral one, for example `Carlo Rella Video Publisher` or `AutoClip Studio`.
+
+Three things to know about this:
+
+1. **You do not need to rename the GitHub repository.** The repo URL is just a link in the
+   form. The client name is a separate thing.
+2. **Do change the app name on the Google Auth Platform branding page**
+   (https://console.cloud.google.com/auth/branding?project=my-uploader-508220) so it
+   matches whatever you put in the form. A mismatch between the two is exactly the kind of
+   inconsistency that gets an audit rejected.
+3. **Do not answer "No" while the name still contains YouTube.** That box is part of a
+   signed attestation. Change the name first, then answer honestly.
+
+> On the last row: the honest answer is **No** — it is a tool on your own computer, not
 > a public service. Don't say yes to look bigger. They can check, and an inconsistency
 > here is worse than a small tool.
 
