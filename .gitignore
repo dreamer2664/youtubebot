@@ -1,0 +1,35 @@
+# ============================================================================
+#  SECRETS — never commit these. The repo is PUBLIC, so this matters.
+# ============================================================================
+client_secret*.json
+token.json
+*.token.json
+.secrets/
+.env
+.env.*
+*.pem
+*.key
+
+# Local config may contain your Gemini key
+config.yaml
+
+# Generated output
+work/
+out/
+queue/
+state.json
+*.mp4
+*.mkv
+*.mov
+*.webm
+*.mp3
+*.wav
+*.jpg
+*.jpeg
+*.png
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
