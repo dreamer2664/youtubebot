@@ -78,8 +78,8 @@ YouTube private lock. If that happens, reply to the email explaining specificall
 you need `videos.insert` unlocked for public viewing, which requires the API audit
 rather than OAuth verification.
 
-Set expectations accordingly: **plan on private/unlisted working today, and treat public
-as a maybe-later.**
+Set expectations accordingly: **plan on videos being private until the audit passes, and
+treat public as a maybe-later.** Unlisted is not a workaround either — see below.
 
 ### What the audit is NOT
 
