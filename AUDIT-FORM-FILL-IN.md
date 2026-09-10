@@ -100,7 +100,7 @@ Through the official YouTube Data API documentation on developers.google.com.
 
 | Field | Put this |
 |---|---|
-| **Nome del client API** | ⚠️ Your **app name**, which **must not contain "YouTube"** — see below. |
+| **Nome del client API** | `Curiosity Compass` |
 | **Il nome contiene "YouTube"?** | ✅ **No, il nome non include "YouTube"** — only true once you have picked a name without it. |
 | **URL di accesso principale** | `https://github.com/dreamer2664/youtubebot` |
 | **URL delle norme sulla privacy** | `https://github.com/dreamer2664/youtubebot/blob/main/PRIVACY.md` |
@@ -114,8 +114,9 @@ The form says so explicitly:
 > *il nome della tua app NON può contenere il termine "YouTube" a meno che tu non abbia
 > una previa approvazione scritta da parte di YouTube.*
 
-The name `youtubebot` contains "YouTube", so it is not usable as the client name. Pick a
-neutral one, for example `Carlo Rella Video Publisher` or `AutoClip Studio`.
+The repo name `youtubebot` contains "YouTube", so it cannot be used as the client name.
+The chosen name is **Curiosity Compass** — neutral, no trademark issue, and consistent
+with the *utente privato* answer.
 
 Three things to know about this:
 

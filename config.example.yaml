@@ -3,6 +3,11 @@
 #  your keys in it. Copy config.example.yaml -> config.yaml to start.
 # ============================================================================
 
+# The public name of this tool. Must NOT contain "YouTube" (Google branding rule).
+# Keep this identical to the app name on the Google Auth Platform branding page
+# and to the "Nome del client API" field in the API audit form.
+app_name: "Curiosity Compass"
+
 channel:
   # The topic of your channel. This drives every generated script and image.
   # Be specific — "history" is weak, "forgotten medieval engineering" is strong.

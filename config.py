@@ -10,6 +10,7 @@ from typing import Any
 import yaml
 
 DEFAULTS: dict[str, Any] = {
+    "app_name": "Curiosity Compass",
     "channel": {
         "topic": "unusual true stories from maritime history",
         "tone": "calm, factual, quietly dramatic",
@@ -63,6 +64,10 @@ def _deep_merge(base: dict, override: dict) -> dict:
 class Config:
     root: Path
     data: dict[str, Any]
+
+    @property
+    def app_name(self) -> str:
+        return str(self.data.get("app_name") or "Curiosity Compass")
 
     # -- channel ---------------------------------------------------------
     @property
