@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Curiosity Compass</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #0f172a; color: #e2e8f0; line-height: 1.65;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 64px 24px 96px; }
+  h1 { font-size: 2.4rem; margin: 0 0 8px; color: #f8fafc; }
+  .sub { color: #94a3b8; font-size: 1.1rem; margin: 0 0 40px; }
+  h2 { font-size: 1.15rem; color: #f8fafc; margin: 40px 0 8px; }
+  p { margin: 0 0 12px; color: #cbd5e1; }
+  ul { color: #cbd5e1; padding-left: 22px; }
+  code { background: #1e293b; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px; margin: 24px 0;
+  }
+  a { color: #7dd3fc; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  footer {
+    margin-top: 64px; padding-top: 24px; border-top: 1px solid #334155;
+    font-size: 0.9rem; color: #94a3b8;
+  }
+  footer a { margin-right: 18px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Curiosity Compass</h1>
+  <p class="sub">A personal desktop tool for producing and publishing original short videos.</p>
+
+  <div class="card">
+    <p style="margin:0"><strong>What this is.</strong> Curiosity Compass is a command-line
+    tool that runs on one person's own computer. It drafts a script, generates a voiceover
+    and images, assembles them into a video, and uploads that video to a single YouTube
+    channel owned by the same person. Every video is reviewed before it is published.</p>
+  </div>
+
+  <h2>Who it is for</h2>
+  <p>One person: its owner. There are no other users, no accounts, no sign-up, and no
+  hosted service. It is not distributed or sold.</p>
+
+  <h2>What it accesses</h2>
+  <p>Only the owner's own Google account and YouTube channel, through OAuth 2.0, using
+  these endpoints of the YouTube Data API v3:</p>
+  <ul>
+    <li><code>videos.insert</code> — uploading a video to the owner's channel</li>
+    <li><code>videos.list</code> — checking upload and processing status</li>
+    <li><code>videos.update</code> — correcting metadata after upload</li>
+    <li><code>thumbnails.set</code> — setting a thumbnail</li>
+    <li><code>channels.list</code> — confirming which channel is authorised</li>
+  </ul>
+
+  <h2>What it stores</h2>
+  <p>A small local file listing the IDs and status of videos the owner uploaded, so a run
+  can resume after an interruption. No data is sent anywhere except Google's own APIs, and
+  nothing is shared with anyone.</p>
+
+  <h2>Revoking access</h2>
+  <p>Authorisation can be withdrawn at any time at
+  <a href="https://security.google.com/settings/security/permissions">Google's security
+  permissions page</a>, which immediately invalidates the stored credentials.</p>
+
+  <footer>
+    <a href="../PRIVACY.md"><strong>Privacy Policy</strong></a>
+    <a href="../TERMS.md"><strong>Terms of Service</strong></a>
+    <a href="https://github.com/dreamer2664/youtubebot">Source code</a>
+    <p style="margin-top:16px">
+      Curiosity Compass uses the YouTube API Services and is subject to the
+      <a href="https://www.youtube.com/t/terms">YouTube API Services Terms of Service</a>,
+      the <a href="https://developers.google.com/youtube/terms/developer-policies">YouTube
+      API Services Developer Policies</a>, and the
+      <a href="https://policies.google.com/privacy">Google Privacy Policy</a>.
+      Curiosity Compass is not affiliated with, endorsed by, or sponsored by YouTube or
+      Google.
+    </p>
+  </footer>
+</main>
+</body>
+</html>
