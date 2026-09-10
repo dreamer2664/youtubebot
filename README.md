@@ -25,37 +25,142 @@ Gemini script  ->  Pollinations images  ->  edge-tts voice  ->  FFmpeg  ->  YouT
 
 ---
 
-## ⚠️ Read this before uploading anything public
+## What the "Compliance Audit" is, in plain words
+
+### The rule
 
 > All videos uploaded via `videos.insert` from **unverified API projects created after
-> 28 July 2020** are restricted to **private viewing mode**. — Google's docs
+> 28 July 2020** are restricted to **private viewing mode**. — Google's own docs
 
-Videos locked this way **cannot be unlocked**, not via the API and not via YouTube
-Studio, and **there is no appeal**. You would have to re-upload every one of them.
+So: upload a video through this tool today and it lands on your channel **locked as
+private**. Locked means:
 
-To lift it, your project must pass the **YouTube API Services Compliance Audit**:
-<https://support.google.com/youtube/contact/yt_api_form> (free, manual review, no
-guaranteed approval).
+- you cannot make it public from the API,
+- you cannot make it public from YouTube Studio,
+- **there is no appeal**,
+- the only fix is to re-upload it later from an audited project.
 
-This is *not* the same as OAuth app verification — you can skip OAuth verification
-entirely by adding yourself as a test user.
+That is why this tool refuses `upload --privacy public` while `audit_passed: false`.
+It is protecting you from burning uploads you would have to redo.
 
-**So:** while `privacy.audit_passed` is `false`, `upload --privacy public` refuses to
-run. Generate and queue videos now; upload once Google approves you.
+### What the audit actually is
+
+A free form. A human at YouTube's API team reads it and decides whether your project
+follows the YouTube API Services Terms of Service. If they say yes, your project becomes
+"audited" and the private lock stops applying to new uploads.
+
+It is **not** a fee, not a certification, and not an automated check. There is no
+guaranteed approval and no published timeline — people report weeks, and rejections happen.
+
+### How to do it
+
+1. Go to <https://support.google.com/youtube/contact/yt_api_form>
+2. Sign in with the **same Google account that owns the Cloud project**.
+3. Fill in the form honestly. It will ask roughly:
+   - **What does your API client do?** Describe it plainly: *"A personal tool that
+     generates short educational videos about [topic] and uploads them to my own
+     YouTube channel."*
+   - **Which endpoints do you use?** `videos.insert`, `videos.list`, `videos.update`,
+     `thumbnails.set`, `channels.list`.
+   - **How do users authorise access?** OAuth 2.0, one user — me — via a desktop client.
+   - **How is data stored / deleted?** Locally on my own machine; nothing is shared.
+   - **Expected daily traffic?** 1–3 uploads per day, well under the 100/day default.
+   - **How can users revoke access?** Link your privacy policy field to
+     <https://security.google.com/settings/security/permissions>.
+4. Submit and wait for email.
+
+### The honest catch
+
+Google rejects personal/hobby projects fairly often, and there is a known loop: if you
+say the app is for personal use, they may reply *"your project does not require
+verification"* — which is true for **OAuth** verification but does **not** lift the
+YouTube private lock. If that happens, reply to the email explaining specifically that
+you need `videos.insert` unlocked for public viewing, which requires the API audit
+rather than OAuth verification.
+
+Set expectations accordingly: **plan on private/unlisted working today, and treat public
+as a maybe-later.**
+
+### What the audit is NOT
+
+- Not the same as OAuth app verification. You can skip OAuth verification entirely by
+  adding yourself as a test user — but that does not unlock public uploads.
+- Not something you can buy. There is no paid fast lane.
+- Not something Selenium can dodge. Browser automation violates the ToS and risks your
+  channel. Not worth it.
+
+### What to do in the meantime
+
+There is no privacy setting that dodges this. Developers report trying
+`privacyStatus: unlisted` and still getting the video locked to private, and Google's
+wording is "all videos uploaded via `videos.insert`" with no exception carved out for
+unlisted. **Treat every API upload as private until the audit passes.**
+
+Two practical options:
+
+1. **Build your backlog now, upload later.** `generate` costs no YouTube quota at all —
+   it only uses Gemini and FFmpeg. Queue up 20 videos, and upload them the day your
+   audit is approved.
+2. **Upload the ones you want visible manually** through youtube.com, which is not
+   affected by any of this, and keep the tool for everything else.
+
+Do not reach for Selenium to get around it. It violates the ToS and risks the channel.
 
 ---
 
 ## Setup
 
-### 1. Install
+### Windows (PowerShell)
 
-```bash
-sudo apt install ffmpeg          # or: brew install ffmpeg / winget install Gyan.FFmpeg
-pip install -r requirements.txt
-cp config.example.yaml config.yaml
+Fastest path — this does FFmpeg, the venv, dependencies, config and credentials in one go:
+
+```powershell
+cd $HOME
+git clone https://github.com/dreamer2664/youtubebot.git
+cd youtubebot
+powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
 
-### 2. Google Cloud credentials (once, ~15 minutes, free)
+It will also find `client_secret*.json` in your Downloads folder and copy it into place
+automatically. Re-run it once after it installs FFmpeg, since PATH changes need a new window.
+
+<details><summary>Or do it by hand</summary>
+
+```powershell
+winget install Gyan.FFmpeg        # then close and reopen PowerShell
+cd $HOME
+git clone https://github.com/dreamer2664/youtubebot.git
+cd youtubebot
+py -3.12 -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+Copy-Item config.example.yaml config.yaml
+notepad config.yaml
+python main.py preflight
+```
+
+</details>
+
+> **Python version note.** 3.14 is very new and some dependencies may not have
+> wheels for it yet. If `pip install` fails, install Python 3.12 from
+> python.org and use `py -3.12 -m venv venv` instead.
+
+> If `Activate.ps1` is blocked by execution policy:
+> `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`
+
+### Linux / macOS
+
+```bash
+sudo apt install ffmpeg          # or: brew install ffmpeg
+git clone https://github.com/dreamer2664/youtubebot.git
+cd youtubebot
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp config.example.yaml config.yaml
+python main.py preflight
+```
+
+### Google Cloud credentials (once, ~15 minutes, free)
 
 1. <https://console.cloud.google.com/> → create a project. **Use exactly one** —
    creating several to multiply quota violates the ToS and Google suspends accounts for it.
@@ -72,11 +177,19 @@ Do **not** link a billing account. The API needs none.
 
 <https://aistudio.google.com/apikey>
 
-Prefer not to put it in a file? Export it instead — the code checks the environment first:
+Open `config.yaml` and paste it in:
 
-```bash
-export GEMINI_API_KEY="..."
+```yaml
+ai:
+  provider: "gemini"
+  gemini_api_key: "AQ.your-key-here"
+  gemini_model: "gemini-flash-latest"
 ```
+
+`config.yaml` is git-ignored, so it will not be committed. On Linux/macOS you can use
+`export GEMINI_API_KEY="..."` instead; the environment is checked first. On Windows
+PowerShell that would be `$env:GEMINI_API_KEY="..."`, but it only lasts for that window,
+so `config.yaml` is the better choice there.
 
 ### 4. Check it
 
