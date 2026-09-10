@@ -96,9 +96,9 @@ matching URL into the nearest text field and say the document is available at th
 
 | Slot | File | How to get it |
 |---|---|---|
-| **Screenshot delle Norme sulla privacy** | `docs/evidence-privacy.png` | Open `PRIVACY.md`, screenshot the sections on YouTube, the Google Privacy Policy link, and deletion/revocation. Save as one image, 1280×720 or larger. |
-| **Screenshot della home page** | `docs/evidence-homepage.png` | Screenshot `https://dreamer2664.github.io/youtubebot/` showing the privacy link in the footer. ⚠️ See the branding warning below. |
-| **Documentazione relativa ai Termini di servizio** | `docs/evidence-terms.png` | Screenshot `TERMS.md`, or upload it as a PDF. |
+| **Screenshot delle Norme sulla privacy** | ✅ **READY:** `docs/evidence/privacy.png` | Generated render of the real privacy page. |
+| **Screenshot della home page** | ✅ **READY:** `docs/evidence/homepage.png` | Generated render of the real homepage with the privacy link in the footer. ⚠️ See the branding warning below. |
+| **Documentazione relativa ai Termini di servizio** | ✅ **READY:** `docs/evidence/terms.png` | Generated render of the real terms page. |
 
 ## PROVE CONDIZIONALI
 
