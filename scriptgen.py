@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import random
 import re
+import time
 from dataclasses import dataclass, field
 from typing import Protocol
 
@@ -117,8 +118,12 @@ class GeminiProvider:
     name = "gemini"
 
     URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    # 429 = rate limited, 500/502/503/504 = transient. Gemini returns 503
+    # "high demand" regularly on newer flash models, so retries are not optional.
+    RETRYABLE = {429, 500, 502, 503, 504}
+    MAX_RETRIES = 4
 
-    def __init__(self, api_key: str, model: str = "gemini-2.0-flash") -> None:
+    def __init__(self, api_key: str, model: str = "gemini-flash-latest") -> None:
         if not api_key:
             raise RuntimeError(
                 "No Gemini API key. Get a free one at https://aistudio.google.com/apikey, "
@@ -127,6 +132,37 @@ class GeminiProvider:
             )
         self.api_key = api_key
         self.model = model
+
+    def _post(self, payload: dict) -> dict:
+        last_error = ""
+        for attempt in range(1, self.MAX_RETRIES + 1):
+            response = requests.post(
+                self.URL.format(model=self.model),
+                params={"key": self.api_key},
+                json=payload,
+                timeout=180,
+            )
+            if response.status_code == 200:
+                return response.json()
+
+            last_error = response.text[:300]
+            if response.status_code in self.RETRYABLE and attempt < self.MAX_RETRIES:
+                delay = min(2 ** attempt + random.uniform(0, 1), 30.0)
+                print(f"  [script] HTTP {response.status_code}, retry in {delay:.1f}s "
+                      f"({attempt}/{self.MAX_RETRIES})")
+                time.sleep(delay)
+                continue
+
+            hint = ""
+            if response.status_code in (400, 403) and "API key not valid" in response.text:
+                hint = " -> the key was rejected. Check it at https://aistudio.google.com/apikey"
+            if response.status_code == 404:
+                hint = (" -> that model no longer exists. Set ai.gemini_model to "
+                        "'gemini-flash-latest' to always track the current one.")
+            raise RuntimeError(
+                f"Gemini request failed (HTTP {response.status_code}){hint}: {last_error}"
+            )
+        raise RuntimeError(f"Gemini gave up after {self.MAX_RETRIES} attempts: {last_error}")
 
     def generate(self, cfg: Config, topic_override: str | None = None) -> Script:
         topic = topic_override or cfg.topic
@@ -151,6 +187,7 @@ Requirements:
   inside the text, no markdown, no emoji.
 - image_prompt: a detailed visual description for an AI image generator matching
   that scene. Photorealistic, cinematic, specific. No text or watermarks in image.
+- tags: 8 to 12 short search tags. Do not leave this empty.
 - Be factually careful. If a detail is uncertain, leave it out rather than invent it.
 
 Return ONLY a JSON object in exactly this shape:
@@ -170,18 +207,8 @@ Return ONLY a JSON object in exactly this shape:
                 "responseMimeType": "application/json",
             },
         }
-        response = requests.post(
-            self.URL.format(model=self.model),
-            params={"key": self.api_key},
-            json=payload,
-            timeout=180,
-        )
-        if response.status_code != 200:
-            raise RuntimeError(
-                f"Gemini request failed (HTTP {response.status_code}): {response.text[:400]}"
-            )
 
-        data = response.json()
+        data = self._post(payload)
         try:
             text = data["candidates"][0]["content"]["parts"][0]["text"]
         except (KeyError, IndexError) as exc:
@@ -190,7 +217,27 @@ Return ONLY a JSON object in exactly this shape:
         script = normalise_script(extract_json(text), self.name)
         if not script.description:
             script.description = f"{script.title}\n\n{topic}"
+        if not script.tags:
+            script.tags = derive_tags(script.title + " " + topic)
         return script
+
+
+def derive_tags(text: str, limit: int = 12) -> list[str]:
+    """Fallback tags from the title/topic when the model omits them."""
+    stop = {
+        "the", "and", "for", "with", "that", "this", "from", "into", "your",
+        "about", "which", "their", "there", "what", "when", "were", "have",
+        "untold", "story", "stories", "true", "really", "happened", "strange",
+        "truth", "nobody", "talks", "forgotten", "chapter",
+    }
+    words = [w.strip(".,!?\"'").lower() for w in re.findall(r"[A-Za-z']{3,}", text)]
+    seen: list[str] = []
+    for word in words:
+        if word not in stop and word not in seen:
+            seen.append(word)
+        if len(seen) >= limit:
+            break
+    return seen
 
 
 # --------------------------------------------------------------------------

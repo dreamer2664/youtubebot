@@ -23,6 +23,8 @@ PATTERNS = [
     (r"ghp_[A-Za-z0-9]{36}", "GitHub classic personal access token"),
     (r"github_pat_[A-Za-z0-9_]{20,}", "GitHub fine-grained personal access token"),
     (r"AIza[0-9A-Za-z\-_]{35}", "Google API key"),
+    # Newer Gemini/AI Studio keys use an "AQ." prefix, not "AIza".
+    (r"AQ\.[A-Za-z0-9_\-]{40,}", "Gemini / Google AI Studio key"),
     (r'"client_secret"\s*:\s*"[^"]{10,}"', "OAuth client secret"),
     (r'"refresh_token"\s*:\s*"[^"]{10,}"', "OAuth refresh token"),
     (r"-----BEGIN [A-Z ]*PRIVATE KEY-----", "private key"),

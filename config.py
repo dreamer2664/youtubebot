@@ -35,7 +35,7 @@ DEFAULTS: dict[str, Any] = {
     "ai": {
         "provider": "gemini",
         "gemini_api_key": "",
-        "gemini_model": "gemini-2.0-flash",
+        "gemini_model": "gemini-flash-latest",
         "image_provider": "pollinations",
         "image_width": 1280,
         "image_height": 720,

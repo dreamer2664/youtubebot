@@ -139,9 +139,12 @@ def assemble_video(
     padded_audio: list[Path],
     out_path: Path,
     cfg: Config,
+    work_dir: Path | None = None,
 ) -> Path:
     """Concatenate segments, build the audio track, mux to the final MP4."""
-    work_dir = out_path.parent
+    if work_dir is None:
+        work_dir = out_path.parent
+    work_dir.mkdir(parents=True, exist_ok=True)
     concat_txt = work_dir / "concat.txt"
     concat_txt.write_text(
         "".join(f"file {shlex.quote(str(p))}\n" for p in segments), encoding="utf-8"
