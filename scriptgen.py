@@ -118,10 +118,14 @@ class GeminiProvider:
     name = "gemini"
 
     URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-    # 429 = rate limited, 500/502/503/504 = transient. Gemini returns 503
-    # "high demand" regularly on newer flash models, so retries are not optional.
+    # 429 = rate limited, 500/502/503/504 = transient. The free tier returns 503
+    # "high demand" often and unpredictably, so retries are mandatory, not optional.
     RETRYABLE = {429, 500, 502, 503, 504}
-    MAX_RETRIES = 4
+    MAX_RETRIES = 6
+    MAX_DELAY = 45.0
+    # Tried, in order, if the configured model keeps failing with 5xx.
+    # These are the lighter models, which stay available when flash saturates.
+    FALLBACK_MODELS = ["gemini-flash-lite-latest", "gemini-3.1-flash-lite"]
 
     def __init__(self, api_key: str, model: str = "gemini-flash-latest") -> None:
         if not api_key:
@@ -133,36 +137,71 @@ class GeminiProvider:
         self.api_key = api_key
         self.model = model
 
-    def _post(self, payload: dict) -> dict:
+    def _try_model(self, model: str, payload: dict) -> tuple[dict | None, int, str]:
+        """One model, with retries. Returns (result, last_status, last_error)."""
+        last_status = 0
         last_error = ""
         for attempt in range(1, self.MAX_RETRIES + 1):
             response = requests.post(
-                self.URL.format(model=self.model),
+                self.URL.format(model=model),
                 params={"key": self.api_key},
                 json=payload,
                 timeout=180,
             )
             if response.status_code == 200:
-                return response.json()
+                return response.json(), 200, ""
 
+            last_status = response.status_code
             last_error = response.text[:300]
-            if response.status_code in self.RETRYABLE and attempt < self.MAX_RETRIES:
-                delay = min(2 ** attempt + random.uniform(0, 1), 30.0)
-                print(f"  [script] HTTP {response.status_code}, retry in {delay:.1f}s "
-                      f"({attempt}/{self.MAX_RETRIES})")
-                time.sleep(delay)
-                continue
 
-            hint = ""
-            if response.status_code in (400, 403) and "API key not valid" in response.text:
-                hint = " -> the key was rejected. Check it at https://aistudio.google.com/apikey"
-            if response.status_code == 404:
-                hint = (" -> that model no longer exists. Set ai.gemini_model to "
-                        "'gemini-flash-latest' to always track the current one.")
+            # A bad key will never work. Stop immediately, on every model.
+            if response.status_code in (400, 401, 403):
+                return None, last_status, last_error
+
+            if response.status_code in self.RETRYABLE and attempt < self.MAX_RETRIES:
+                delay = min(2 ** attempt + random.uniform(0, 1), self.MAX_DELAY)
+                print(f"  [script] {model}: HTTP {response.status_code}, retry in "
+                      f"{delay:.0f}s ({attempt}/{self.MAX_RETRIES})")
+                time.sleep(delay)
+
+        return None, last_status, last_error
+
+    def _post(self, payload: dict) -> dict:
+        chain = [self.model] + [m for m in self.FALLBACK_MODELS if m != self.model]
+        last_status, last_error = 0, ""
+
+        for index, model in enumerate(chain):
+            result, status, error = self._try_model(model, payload)
+            if result is not None:
+                if index > 0:
+                    print(f"  [script] using fallback model {model}")
+                return result
+
+            last_status, last_error = status, error
+
+            if status in (400, 401, 403):
+                hint = ""
+                if "API key not valid" in error:
+                    hint = " -> the key was rejected. Check it at https://aistudio.google.com/apikey"
+                raise RuntimeError(
+                    f"Gemini rejected the request (HTTP {status}){hint}: {last_error}"
+                )
+            if status == 404:
+                print(f"  [script] {model} is not available (404); trying the next model.")
+                continue
+            if index + 1 < len(chain):
+                print(f"  [script] {model} gave up (HTTP {status}); trying a fallback model.")
+
+        if last_status == 404:
             raise RuntimeError(
-                f"Gemini request failed (HTTP {response.status_code}){hint}: {last_error}"
+                "No Gemini model in the fallback chain exists. Set ai.gemini_model to "
+                f"'gemini-flash-latest'. Last error: {last_error}"
             )
-        raise RuntimeError(f"Gemini gave up after {self.MAX_RETRIES} attempts: {last_error}")
+        raise RuntimeError(
+            f"Gemini unavailable after trying {len(chain)} model(s) with retries "
+            f"(last HTTP {last_status}). This is free-tier saturation — wait a few "
+            f"minutes and re-run; nothing was lost. {last_error}"
+        )
 
     def generate(self, cfg: Config, topic_override: str | None = None) -> Script:
         topic = topic_override or cfg.topic
