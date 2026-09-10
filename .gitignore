@@ -33,3 +33,7 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# keep the audit docs even though images are ignored elsewhere
+!docs/*.png
+!docs/*.svg
